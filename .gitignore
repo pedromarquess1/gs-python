@@ -1,0 +1,14 @@
+# Ambientes virtuais
+venv/
+env/
+.venv/
+
+# Cache do Python
+__pycache__/
+*.py[cod]
+
+# Dados locais de execução (opcional, caso queira que cada um gere o seu)
+leituras.json
+
+# Streamlit
+.streamlit/
