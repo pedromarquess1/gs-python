@@ -1,10 +1,10 @@
-# Tem Água? — Central de Monitoramento e Abastecimento
+# Tem Água? 
 
 Projeto desenvolvido para o desafio **GS - CitizenTech (FIAP)**.
 
 - Disciplina: Computational Thinking with Python
 - Turma: Engenharia de Software - 1SPV
-- Integrantes:  Pedro - RM 569307, Renan - RM , Evandro - RM , Raphael - RM
+- Integrantes:  Pedro - RM 569307, Renan - RM 569077, Evandro - RM 572473, Raphael de Oliveira- RM 571065
 
 ## 1. O problema
 
@@ -40,29 +40,7 @@ Um módulo IoT mede o nível da água na caixa e envia leituras em formato JSON.
 | ATENCAO | autonomia menor que 12h, **ou** a água não dura até as 5h |
 | NORMAL  | nenhuma das condições acima                               |
 
-Todos esses limites estão definidos como constantes no início do metricas.py.
-
-## 5. Estrutura do projeto
-
-
-gs-python/
-├── main.py            # Escolha entre Terminal ou Web
-├── cli.py             # Menu do terminal
-├── app.py             # Modo web em Streamlit
-├── dados.py           # Base inicial, validação de JSON e salvar/carregar leituras
-├── metricas.py        # Constantes e funções de cálculo e classificação
-├── requirements.txt   # Dependências do modo web
-├── leituras.json      # Criado automaticamente na primeira execução (permanência de dados)
-├── prompt.md          # Registro do uso de IA
-├── README.md          # Documentação do projeto
-└── views/             # Telas do modo web
-    ├── __init__.py
-    ├── visao_geral.py
-    ├── registro.py
-    ├── qualidade.py
-    ├── faltas.py
-    └── mapa.py
-
+Todos esses limites estão definidos como constantes em metricas.py.
 
 ## 6. Como executar
 
