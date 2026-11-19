@@ -15,7 +15,9 @@ def renderizar(df):
     for item in df.to_dict("records"):
         tampa_aberta = item.get("tampa") == "ABERTA"
         agua_parada = item.get("idade_agua_h", 0) > IDADE_MAXIMA_AGUA_H
-        if tampa_aberta or agua_parada:
+        alertas = item.get("alertas", [])
+        tem_alertas = isinstance(alertas, list) and len(alertas) > 0
+        if tampa_aberta or agua_parada or tem_alertas:
             caixas_alerta.append(item)
 
     if caixas_alerta:

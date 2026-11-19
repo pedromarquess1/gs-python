@@ -1,5 +1,6 @@
 import subprocess
 import sys
+import os
 from cli import executar_cli
 
 
@@ -20,9 +21,12 @@ def iniciar():
         case "2":
             print("\nIniciando servidor Streamlit no navegador...")
             try:
-                subprocess.run([sys.executable, "-m", "streamlit", "run", "app.py"], check=True)
+                app_path = os.path.join(os.path.dirname(__file__), "app.py")
+                subprocess.run([sys.executable, "-m", "streamlit", "run", app_path], check=True)
             except FileNotFoundError:
                 print("[ERRO] Streamlit nao instalado. Execute: pip install -r requirements.txt")
+            except subprocess.CalledProcessError as erro:
+                print(f"[ERRO] O servidor web terminou com erro: {erro}")
             except KeyboardInterrupt:
                 print("\nServidor encerrado pelo usuario.")
         case "0":

@@ -28,6 +28,26 @@ def calcular_autonomia_horas(volume_atual_litros, consumo_medio_lh):
         return 0.0
 
 
+def calcular_nivel_pct(altura_agua_m, altura_caixa_m):
+    try:
+        if altura_caixa_m <= 0:
+            return 0.0
+        nivel = (altura_agua_m / altura_caixa_m) * 100.0
+        return round(max(0.0, min(100.0, nivel)), 1)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def calcular_horas_ate_5h(hora):
+    hora_fim_pressao = JANELA_PRESSAO_RUA[1]
+    return (hora_fim_pressao - hora) % 24
+
+
+def verificar_dura_ate_5h(autonomia_h, hora):
+    horas_faltantes = calcular_horas_ate_5h(hora)
+    return autonomia_h >= horas_faltantes
+
+
 def classificar_estado_caixa(autonomia_h, nivel_pct, ate_5h_ok):
     # Define se a situação é normal, atenção ou crítica
     if autonomia_h <= LIMITES_AUTONOMIA_H[1] or nivel_pct <= NIVEL_CRITICO_PCT:

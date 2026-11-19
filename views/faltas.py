@@ -3,10 +3,10 @@ import pandas as pd
 
 
 def renderizar(df: pd.DataFrame):
-    st.header("Registro de Faltas d'Água (Evidência para o Bairro)")
-    st.markdown("Histórico de interrupções de fornecimento detectadas pela falta de variação no nível.")
+    st.header("Histórico de Leituras")
+    st.markdown("Consulta das leituras registradas para acompanhar a variação do nível ao longo do tempo.")
 
-    st.info("O sistema registra automaticamente quando a boia está aberta e o nível permanece estagnado durante a janela noturna.")
+    st.info("Esta tela mostra o histórico disponível. A detecção automática de falta ainda não está implementada.")
     if not df.empty:
         st.dataframe(
             df[["casa", "rua_id", "ts", "nivel_pct", "autonomia_h", "estado"]],

@@ -1,11 +1,6 @@
-"""
-Nota: Decidi usar Streamlit porque já tínhamos familiaridade com a biblioteca 
-da matéria de Different Problem Solving, o que facilitou bastante a fazer.
-"""
-
 import streamlit as st
 import pandas as pd
-from dados import carregar_leituras
+from dados import carregar_leituras, obter_leituras_por_caixa
 from views import visao_geral, registro, qualidade, faltas, mapa
 
 st.set_page_config(page_title="Tem Água? | Central do Bairro", page_icon="💧", layout="wide")
@@ -22,12 +17,12 @@ opcao = st.sidebar.radio(
         "Visão Geral",
         "Registrar / Importar JSON",
         "Qualidade da Água",
-        "Registro de Faltas",
+        "Histórico de Leituras",
         "Mapa Coletivo (Ruas)"
     ]
 )
 
-df = pd.DataFrame(st.session_state.leituras)
+df = pd.DataFrame(obter_leituras_por_caixa(st.session_state.leituras))
 
 if opcao == "Visão Geral":
     visao_geral.renderizar(df)
@@ -35,7 +30,7 @@ elif opcao == "Registrar / Importar JSON":
     registro.renderizar()
 elif opcao == "Qualidade da Água":
     qualidade.renderizar(df)
-elif opcao == "Registro de Faltas":
+elif opcao == "Histórico de Leituras":
     faltas.renderizar(df)
 elif opcao == "Mapa Coletivo (Ruas)":
     mapa.renderizar(df)

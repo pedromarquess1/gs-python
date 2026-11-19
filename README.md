@@ -1,83 +1,127 @@
-# Tem Água? 
+# Tem Água? - CitizenTech
+
+## Ficha do projeto
+
+- **Nome:** Tem Água?
+- **Cidade e bairro:** Cidade simulada no projeto, bairro sem identificação pessoal.
+- **Cidadão beneficiado:** Moradores de casas que dependem de caixa d'água em áreas com queda de pressão.
+- **Problema:** A falta de água pode chegar sem aviso e o morador não tem registro para mostrar a dificuldade da rua.
+- **Como funciona:** O projeto recebe leituras da caixa, calcula volume, nível e autonomia, registra o estado e mostra os resultados no terminal ou na interface web.
+- **Python:** Central que valida dados, salva leituras em JSON, calcula métricas e organiza os resultados.
+- **Wokwi:** Ambiente usado para simular o envio das leituras em formato JSON.
+- **React:** Não foi usado nesta versão. A interface extra foi feita com Streamlit.
+- **Matemática:** Converte altura em volume e nível, calcula a autonomia e verifica quanto tempo falta até às 5h.
+- **Indicador de impacto:** Número de caixas monitoradas, caixas em atenção ou crítica e ruas com maior incidência.
+- **ODS:** ODS 10 - Redução das desigualdades, ODS 11 - Cidades e comunidades sustentáveis e, como complemento, ODS 6 - Água potável e saneamento.
 
 Projeto desenvolvido para o desafio **GS - CitizenTech (FIAP)**.
 
 - Disciplina: Computational Thinking with Python
-- Turma: Engenharia de Software - 1SPV
-- Integrantes:  Pedro - RM 569307, Renan - RM 569077, Evandro - RM 572473, Raphael de Oliveira- RM 571065
+- Turma: Engenharia de Software - 1ESPV
+- Integrantes: Pedro - RM 569307, Renan - RM 569077, Evandro - RM 572473, Raphael de Oliveira - RM 571065
 
-## 1. O problema
+## 1. Relação com os ODS
 
-Milhões de residências sofrem com a redução na rede de abastecimento durante a noite (das 19h às 5h). Como a caixa d'água fica na laje, o morador só percebe a falta quando a água já acabou, e não existe nenhum registro que comprove o problema para o bairro.
+- **ODS 10 - Redução das desigualdades:** ajuda a mostrar quais ruas têm mais dificuldade de abastecimento e oferece dados que podem apoiar pedidos coletivos.
+- **ODS 11 - Cidades e comunidades sustentáveis:** melhora o acompanhamento do consumo e do abastecimento local, ajudando o bairro a lidar melhor com falta de água.
+- **ODS 6 - Água potável e saneamento:** traz alertas sobre tampa aberta e água parada, que podem ajudar a cuidar da qualidade da água armazenada.
 
-## 2. A solução
+## 2. O problema
 
-Um módulo IoT mede o nível da água na caixa e envia leituras em formato JSON. Esta **central em Python** recebe esses dados e:
+Milhões de residências sofrem com a redução na rede de abastecimento durante a noite, principalmente das 19h às 5h. Como a caixa d'água fica em um ponto alto, o morador só percebe a falta quando a água já acabou e normalmente não tem registros do problema.
 
-- calcula o volume e a autonomia em horas (se a água dura até as 5h da manhã);
+## 3. A solução
+
+Um módulo IoT mede a altura da água na caixa e envia leituras em formato JSON. Esta central em Python recebe esses dados e:
+
+- calcula o volume e o nível da caixa;
+- calcula a autonomia em horas;
+- verifica se a água dura até às 5h conforme a hora da leitura;
 - classifica cada caixa como NORMAL, ATENCAO ou CRITICA;
-- alerta sobre qualidade da água (tampa aberta ou água parada por muitas horas);
-- gera um mapa coletivo por rua, com dados anônimos, que serve de evidência sobre os moradores.
+- mostra alertas de qualidade e um resumo por rua.
 
-## 3. Funcionalidades
+## 4. Funcionalidades
 
-- Visão geral das caixas, com indicadores e gráficos: Terminal e Web
-- Importar leituras de arquivo JSON (Wokwi): Terminal e Web (apenas texto colado na web)
-- Registrar leitura manualmente: Terminal e Web
-- Alertas de qualidade da água: Terminal e Web
-- Histórico de faltas: Web
-- Ranking / mapa coletivo de ruas: Terminal e Web
-- Salvar e carregar dados automaticamente: Terminal e Web
+- Visão geral das caixas no terminal e na web.
+- Importação de arquivo JSON no terminal e na web.
+- Registro manual no terminal e na web.
+- Alertas de tampa aberta, água parada e alertas enviados no JSON.
+- Histórico de leituras na web.
+- Ranking e mapa coletivo de ruas no terminal e na web.
+- Salvamento automático das leituras em leituras.json.
 
-## 4. Regras de cálculo
+## 5. Modos de execução
+
+O modo terminal é a entrega principal deste projeto. Ele foi feito somente com Python puro e usa a biblioteca padrão.
+
+O modo web com Streamlit é um extra. Ele facilita a visualização em tabelas e gráficos, mas exige a instalação das bibliotecas de requirements.txt.
+
+## 6. Regras de cálculo
 
 - Volume (L) = área da base (m²) × altura da água (m) × 1000
+- Nível (%) = altura da água (m) ÷ altura da caixa (m) × 100
 - Autonomia (h) = quantidade atual (L) ÷ consumo médio (L/h)
-- Dura até as 5h? = autonomia maior ou igual a 10 horas (tempo entre 19h e 5h)
+- Horas até às 5h = (5 - hora da leitura) % 24
+- Dura até às 5h = autonomia maior ou igual às horas calculadas
 
-| Estado  | Condição                                                  |
-| CRITICA | autonomia de 3h ou menos, **ou** nível de 10% ou menos    |
-| ATENCAO | autonomia menor que 12h, **ou** a água não dura até as 5h |
-| NORMAL  | nenhuma das condições acima                               |
+| Estado | Condição |
+|---|---|
+| CRITICA | autonomia de 3h ou menos, ou nível de 10% ou menos |
+| ATENCAO | autonomia menor que 12h, ou a água não dura até às 5h |
+| NORMAL | nenhuma das condições acima |
 
-Todos esses limites estão definidos como constantes em metricas.py.
+Os limites estão definidos em metricas.py.
 
-## 6. Como executar
+## 7. Como executar
 
-1. Instale as dependências (necessário apenas para o modo web):
-    pip install -r requirements.txt
+1. Para o modo principal, instale apenas o Python.
+2. Execute `python main.py`.
+3. Escolha a opção 1 para usar o terminal.
+4. Para o modo web , instale as dependências com `pip install -r requirements.txt` e escolha a opção 2 no menu.
 
-2. Execute o projeto:
-    python main.py
+## 8. Formato do JSON aceito
 
-3. Escolha o modo no menu: (1) para o terminal ou (2) para a interface web.
+O arquivo pode conter um objeto ou uma lista de objetos. Os campos numéricos nivel_pct, volume_l, taxa_lh e autonomia_h precisam ser números. O estado precisa ser NORMAL, ATENCAO ou CRITICA.
 
-O modo terminal usa apenas a biblioteca padrão do Python e funciona sem instalar nada.
+Campos obrigatórios:
 
-## 7. Formato do JSON aceito
+- casa
+- caixa
+- rua_id
+- nivel_pct
+- volume_l
+- taxa_lh
+- autonomia_h
+- estado
 
-O arquivo pode ter um objeto ou uma lista de objetos. Campos obrigatórios: casa, caixa, rua_id, nivel_pct, volume_l, taxa_lh, autonomia_h e estado. Os demais campos recebem valores padrão se não forem enviados.
+Os demais campos recebem valores padrão.
 
-Teste com:
+Exemplo:
 
+```json
 {
-    "casa": "c10",
-    "caixa": "cx-1",
-    "rua_id": "r15",
-    "nivel_pct": 45,
-    "volume_l": 450,
-    "taxa_lh": 25,
-    "autonomia_h": 18,
-    "estado": "NORMAL"
+  "casa": "c10",
+  "caixa": "cx-1",
+  "rua_id": "r15",
+  "nivel_pct": 45,
+  "volume_l": 450,
+  "taxa_lh": 25,
+  "autonomia_h": 18,
+  "estado": "NORMAL"
 }
+```
 
-## 8. Persistência de dados
+Na importação, a autonomia e a hora da leitura são usadas para recalcular ate_5h e estado.
 
-As leituras são salvas automaticamente em leituras.json sempre que o usuário importa um JSON ou registra uma leitura manual, nos dois modos. Na primeira execução, o arquivo é criado com dados simulados. Se o arquivo estiver corrompido, o sistema volta para a base inicial em vez de travar.
+## 9. Persistência de dados
 
+As leituras são salvas em leituras.json após importar um JSON ou registrar uma leitura manual. Na primeira execução, o arquivo é criado com dados simulados. Quando o arquivo tem registros ruins, o sistema ignora apenas esses registros e avisa quantos foram descartados.
 
-## 11. Limitações
+Os dados são simulados e não representam pessoas reais. Não existem dados pessoais reais neste projeto.
 
-- Os dados vêm de arquivos JSON simulados, sem conexão em tempo real com o ESP32.
-- O volume considera uma caixa com área de base fixa (1 m²).
-- O "mapa" é uma tabela com gráfico por rua, sem mapa geográfico.
+## 10. Limitações
+
+- Não existe conexão em tempo real com um ESP32 nesta entrega.
+- O volume considera uma caixa com área de base fixa de 1 m².
+- O mapa da web é uma tabela e um gráfico por rua, não um mapa geográfico.
+- A detecção automática de faltas ainda não foi implementada; a tela web mostra o histórico de leituras.

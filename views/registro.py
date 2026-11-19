@@ -2,8 +2,8 @@ import streamlit as st
 import datetime
 from dados import validar_e_extrair_json_agua, salvar_leituras
 from metricas import (
-    calcular_volume_litros, calcular_autonomia_horas, classificar_estado_caixa,
-    AUTONOMIA_MINIMA_ATE_5H,
+    calcular_volume_litros, calcular_autonomia_horas, calcular_nivel_pct,
+    classificar_estado_caixa, verificar_dura_ate_5h,
 )
 
 
@@ -50,16 +50,18 @@ def renderizar():
                 casa = st.text_input("Casa", value="c05")
                 caixa = st.text_input("ID da Caixa", value="cx-1")
                 rua = st.text_input("ID da Rua", value="r03")
-                nivel = st.number_input("Nível (%)", 0.0, 100.0, 50.0)
             with c2:
-                altura = st.number_input("Altura da Água (m)", 0.05, 2.0, 0.5)
+                altura_caixa = st.number_input("Altura da Caixa (m)", 0.1, 5.0, 1.0)
+                altura = st.number_input("Altura da Água (m)", 0.0, float(altura_caixa), 0.5)
                 taxa = st.number_input("Consumo Médio (L/h)", 1.0, 200.0, 20.0)
 
             submetido = st.form_submit_button("Salvar Leitura")
             if submetido:
                 vol = calcular_volume_litros(altura)
                 aut = calcular_autonomia_horas(vol, taxa)
-                ate_5h = aut >= AUTONOMIA_MINIMA_ATE_5H
+                nivel = calcular_nivel_pct(altura, altura_caixa)
+                agora = datetime.datetime.now()
+                ate_5h = verificar_dura_ate_5h(aut, agora.hour)
                 est = classificar_estado_caixa(aut, nivel, ate_5h)
 
                 st.session_state.leituras.append({

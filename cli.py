@@ -1,9 +1,9 @@
 import os
 import datetime
-from dados import carregar_leituras, salvar_leituras, validar_e_extrair_json_agua
+from dados import carregar_leituras, salvar_leituras, validar_e_extrair_json_agua, obter_leituras_por_caixa
 from metricas import (
-    calcular_volume_litros, calcular_autonomia_horas, classificar_estado_caixa,
-    AUTONOMIA_MINIMA_ATE_5H, IDADE_MAXIMA_AGUA_H,
+    calcular_volume_litros, calcular_autonomia_horas, calcular_nivel_pct,
+    classificar_estado_caixa, verificar_dura_ate_5h, IDADE_MAXIMA_AGUA_H,
 )
 
 
@@ -61,10 +61,11 @@ def executar_cli():
         match opcao:
             case "1":
                 print("--- PAINEL GERAL DE CAIXAS ---\n")
-                if not leituras:
+                leituras_recentes = obter_leituras_por_caixa(leituras)
+                if not leituras_recentes:
                     print("Nenhuma leitura registrada no momento.")
                 else:
-                    for item in leituras:
+                    for item in leituras_recentes:
                         status_5h = "Sim" if item["ate_5h"] else "NAO"
                         print(
                             f"[{item['estado']:8}] Casa: {item['casa']} | Rua: {item['rua_id']} | "
@@ -99,13 +100,36 @@ def executar_cli():
                     casa = input("Codigo da casa (ex: c07): ").strip() or "c07"
                     caixa = input("ID da caixa (ex: cx-1): ").strip() or "cx-1"
                     rua = input("ID da rua (ex: r12): ").strip() or "r12"
-                    nivel = float(input("Nivel percentual (%) [ex: 60.0]: "))
-                    altura = float(input("Altura da agua em metros (ex: 0.6): "))
-                    taxa = float(input("Consumo medio (L/h) [ex: 20.0]: "))
+                    while True:
+                        try:
+                            altura_caixa = float(input("Altura da caixa em metros (ex: 1.0): "))
+                            if 0 < altura_caixa:
+                                break
+                        except ValueError:
+                            pass
+                        print("[ERRO] A altura da caixa deve ser maior que 0.")
+                    while True:
+                        try:
+                            altura = float(input("Altura da agua em metros (ex: 0.6): "))
+                            if 0 <= altura <= altura_caixa:
+                                break
+                        except ValueError:
+                            pass
+                        print(f"[ERRO] A altura deve ficar entre 0 e {altura_caixa} m.")
+                    while True:
+                        try:
+                            taxa = float(input("Consumo medio (L/h) [ex: 20.0]: "))
+                            if taxa > 0:
+                                break
+                        except ValueError:
+                            pass
+                        print("[ERRO] O consumo deve ser maior que 0.")
 
                     volume = calcular_volume_litros(altura)
                     autonomia = calcular_autonomia_horas(volume, taxa)
-                    ate_5h = autonomia >= AUTONOMIA_MINIMA_ATE_5H
+                    nivel = calcular_nivel_pct(altura, altura_caixa)
+                    agora = datetime.datetime.now()
+                    ate_5h = verificar_dura_ate_5h(autonomia, agora.hour)
                     estado = classificar_estado_caixa(autonomia, nivel, ate_5h)
 
                     leituras.append({
@@ -148,7 +172,7 @@ def executar_cli():
             case "5":
                 print("--- RANKING DE RUAS (MAIOR CRITICIDADE) ---\n")
                 ruas_resumo = {}
-                for item in leituras:
+                for item in obter_leituras_por_caixa(leituras):
                     r = item["rua_id"]
                     if r not in ruas_resumo:
                         ruas_resumo[r] = {"caixas": 0, "criticas": 0}

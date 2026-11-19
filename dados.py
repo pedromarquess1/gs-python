@@ -1,5 +1,11 @@
 import json
 import os
+from datetime import datetime
+from metricas import (
+    calcular_autonomia_horas,
+    classificar_estado_caixa,
+    verificar_dura_ate_5h,
+)
 
 ARQUIVO_DADOS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "leituras.json")
 CAMPOS_OBRIGATORIOS = ("casa", "caixa", "rua_id", "nivel_pct", "volume_l", "taxa_lh", "autonomia_h", "estado")
@@ -51,24 +57,49 @@ def validar_e_extrair_json_agua(conteudo_str):
             return False, [], "Formato inválido: o JSON precisa ser um objeto ou lista."
 
         registros_validos = []
+        descartados = 0
         for idx, item in enumerate(dados_carregados):
             if not isinstance(item, dict):
-                return False, [], f"Item {idx} não é um dicionário válido."
+                descartados += 1
+                continue
 
             faltantes = [c for c in CAMPOS_OBRIGATORIOS if c not in item]
             if faltantes:
-                return False, [], f"Faltam campos obrigatórios no registro {idx + 1}: {', '.join(faltantes)}"
+                descartados += 1
+                continue
+
+            campos_invalidos = []
+            for campo in ("nivel_pct", "volume_l", "taxa_lh", "autonomia_h"):
+                valor = item[campo]
+                if isinstance(valor, bool) or not isinstance(valor, (int, float)):
+                    campos_invalidos.append(campo)
+            if campos_invalidos or item["estado"] not in ("NORMAL", "ATENCAO", "CRITICA"):
+                descartados += 1
+                continue
 
             item.setdefault("ts", "2026-11-15T12:00:00")
-            item.setdefault("ate_5h", True)
             item.setdefault("temp_agua", 23.0)
             item.setdefault("tampa", "FECHADA")
             item.setdefault("idade_agua_h", 5.0)
             item.setdefault("alertas", [])
-            
+
+            try:
+                hora = datetime.fromisoformat(str(item["ts"])).hour
+            except (TypeError, ValueError):
+                hora = 12
+
+            item["ate_5h"] = verificar_dura_ate_5h(float(item["autonomia_h"]), hora)
+            item["estado"] = classificar_estado_caixa(
+                float(item["autonomia_h"]),
+                float(item["nivel_pct"]),
+                item["ate_5h"],
+            )
             registros_validos.append(item)
 
-        return True, registros_validos, f"{len(registros_validos)} registro(s) importado(s) com sucesso!"
+        mensagem = f"{len(registros_validos)} registro(s) importado(s) com sucesso!"
+        if descartados:
+            mensagem += f" {descartados} registro(s) inválido(s) descartado(s)."
+        return True, registros_validos, mensagem
 
     except json.JSONDecodeError as e:
         return False, [], f"Erro na sintaxe do JSON: {e}"
@@ -97,5 +128,19 @@ def carregar_leituras(caminho=ARQUIVO_DADOS):
     except OSError:
         return obter_dados_iniciais()
 
-    sucesso, registros, _ = validar_e_extrair_json_agua(conteudo)
-    return registros if sucesso else obter_dados_iniciais()
+    sucesso, registros, mensagem = validar_e_extrair_json_agua(conteudo)
+    if sucesso:
+        if "descartado" in mensagem:
+            print(f"[AVISO] {mensagem}")
+        return registros
+    return obter_dados_iniciais()
+
+
+def obter_leituras_por_caixa(leituras):
+    mais_recentes = {}
+    for item in leituras:
+        chave = (item.get("casa"), item.get("caixa"))
+        ts = str(item.get("ts", ""))
+        if chave not in mais_recentes or ts > str(mais_recentes[chave].get("ts", "")):
+            mais_recentes[chave] = item
+    return list(mais_recentes.values())
