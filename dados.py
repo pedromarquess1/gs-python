@@ -2,6 +2,7 @@ import json
 import os
 from datetime import datetime
 from metricas import (
+    CONSUMO_AUSENTE_AUTONOMIA_H,
     calcular_autonomia_horas,
     classificar_estado_caixa,
     verificar_dura_ate_5h,
@@ -47,6 +48,47 @@ def obter_dados_iniciais():
     ]
 
 
+# Estados e avisos que o ESP32 (Edge) manda, traduzidos para os da central
+ESTADOS_EDGE = {"normal": "NORMAL", "atencao": "ATENCAO", "pouca agua": "CRITICA", "critica": "CRITICA"}
+AVISOS_EDGE = {
+    "sem entrada de agua detectada": "SEM_ENTRADA",
+    "possivel vazamento": "VAZAMENTO",
+    "tampa pode estar aberta": "TAMPA_ABERTA",
+}
+
+
+def converter_formato_edge(item):
+    # Aceita o JSON do ESP32 (agua_litros, nivel_porcentagem...) e devolve no formato da central
+    if "agua_litros" not in item or "volume_l" in item:
+        return item
+    estado = str(item.get("estado", "")).strip().lower()
+    if estado not in ESTADOS_EDGE or item.get("agua_litros") is None:
+        return item  # "Sem leitura" ou dado incompleto: a validacao descarta
+    volume = item["agua_litros"]
+    autonomia = item.get("horas_restantes") or CONSUMO_AUSENTE_AUTONOMIA_H
+    convertido = {
+        "casa": item.get("casa", "c07"),
+        "caixa": item.get("caixa", "cx-1"),
+        "rua_id": item.get("rua", "r12"),
+        "nivel_pct": item.get("nivel_porcentagem"),
+        "volume_l": volume,
+        "taxa_lh": item.get("queda_litros_por_hora") or round(volume / autonomia, 1),
+        "autonomia_h": autonomia,
+        "estado": ESTADOS_EDGE[estado],
+        "alertas": [AVISOS_EDGE[a.lower()] for a in item.get("avisos", []) if a.lower() in AVISOS_EDGE],
+    }
+    if item.get("temperatura_graus") is not None:
+        convertido["temp_agua"] = item["temperatura_graus"]
+    try:
+        # O ESP32 manda "data": "12/11/2026" e "horario": "17:00"
+        dia, mes, ano = str(item.get("data", "")).split("/")
+        convertido["ts"] = f"{int(ano):04d}-{int(mes):02d}-{int(dia):02d}T{item.get('horario', '')}:00"
+        datetime.fromisoformat(convertido["ts"])
+    except (ValueError, TypeError):
+        convertido.pop("ts", None)  # sem data valida: a validacao usa o valor padrao
+    return convertido
+
+
 def validar_e_extrair_json_agua(conteudo_str):
     try:
         dados_carregados = json.loads(conteudo_str)
@@ -62,6 +104,7 @@ def validar_e_extrair_json_agua(conteudo_str):
             if not isinstance(item, dict):
                 descartados += 1
                 continue
+            item = converter_formato_edge(item)
 
             faltantes = [c for c in CAMPOS_OBRIGATORIOS if c not in item]
             if faltantes:
@@ -96,6 +139,8 @@ def validar_e_extrair_json_agua(conteudo_str):
             )
             registros_validos.append(item)
 
+        if not registros_validos:
+            return False, [], f"Nenhum registro valido. {descartados} registro(s) descartado(s)."
         mensagem = f"{len(registros_validos)} registro(s) importado(s) com sucesso!"
         if descartados:
             mensagem += f" {descartados} registro(s) inválido(s) descartado(s)."

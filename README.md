@@ -9,7 +9,7 @@
 - **Como funciona:** O projeto recebe leituras da caixa, calcula volume, nível e autonomia, registra o estado e mostra os resultados no terminal ou na interface web.
 - **Python:** Central que valida dados, salva leituras em JSON, calcula métricas e organiza os resultados.
 - **Wokwi:** Ambiente usado para simular o envio das leituras em formato JSON.
-- **React:** Não foi usado nesta versão. A interface extra foi feita com Streamlit.
+- **React:** O app web em React é a entrega de Front-end e Web Development, em outro repositório. Aqui, a interface extra opcional usa Streamlit.
 - **Matemática:** Converte altura em volume e nível, calcula a autonomia e verifica quanto tempo falta até às 5h.
 - **Indicador de impacto:** Número de caixas monitoradas, caixas em atenção ou crítica e ruas com maior incidência.
 - **ODS:** ODS 10 - Redução das desigualdades, ODS 11 - Cidades e comunidades sustentáveis e, como complemento, ODS 6 - Água potável e saneamento.
@@ -112,6 +112,8 @@ Exemplo:
 ```
 
 Na importação, a autonomia e a hora da leitura são usadas para recalcular ate_5h e estado.
+
+A central também aceita o JSON que o ESP32 manda no Wokwi (`agua_litros`, `nivel_porcentagem`, `horas_restantes`, `estado` e a lista `avisos`). O estado "Pouca agua" do ESP32 vira CRITICA, e os avisos viram SEM_ENTRADA, VAZAMENTO e TAMPA_ABERTA.
 
 ## 9. Persistência de dados
 
